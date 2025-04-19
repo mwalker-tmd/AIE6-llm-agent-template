@@ -1,4 +1,4 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Form
 from backend.agents.agent_loader import load_agent
 
 router = APIRouter()
@@ -6,7 +6,7 @@ router = APIRouter()
 agent = load_agent()
 
 @router.post("/agent", tags=["Agent"])
-async def run_agent(query: str):
+async def run_agent(query: str = Form(...)):
     """
     Executes the agent with the given query input.
 
@@ -18,7 +18,15 @@ async def run_agent(query: str):
     Returns
     -------
     dict
-        The agent's response.
+        The final string response from the agent.
+        Example:
+        {
+            "response": "You said: Hello world"
+        }
     """
     result = await agent.ainvoke({"input": query})
-    return {"response": result}
+    
+    # Extract the useful part
+    output = result.get("output") if isinstance(result, dict) else result
+
+    return {"response": output}

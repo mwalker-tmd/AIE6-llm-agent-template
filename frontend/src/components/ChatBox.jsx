@@ -23,7 +23,16 @@ export default function ChatBox() {
         body: formData,
       })
 
-      if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`)
+      if (!res.ok) {
+        // Try to parse the error response
+        try {
+          const errorData = await res.json()
+          throw new Error(errorData.error || `HTTP error! status: ${res.status}`)
+        } catch (e) {
+          // If parsing fails, use the status text
+          throw new Error(`HTTP error! status: ${res.status}`)
+        }
+      }
 
       if (res.body) {
         const reader = res.body.getReader()
@@ -32,7 +41,12 @@ export default function ChatBox() {
           const { done, value } = await reader.read()
           if (done) break
           const text = decoder.decode(value)
-          setResponse(prev => prev + text)
+          try {
+            const parsed = JSON.parse(text);
+            setResponse(prev => prev + (parsed.response || text));
+          } catch {
+            setResponse(prev => prev + text);
+          }
         }
       } else {
         const data = await res.json()
