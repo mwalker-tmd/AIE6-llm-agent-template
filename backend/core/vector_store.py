@@ -1,5 +1,5 @@
-from core.vectordatabase import VectorDatabase
-from core.text_utils import PDFLoader, TextFileLoader, CharacterTextSplitter
+from backend.core.vectordatabase import VectorDatabase
+from backend.core.text_utils import PDFLoader, TextFileLoader, CharacterTextSplitter
 
 class VectorStore:
     def __init__(self):

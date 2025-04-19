@@ -1,4 +1,4 @@
-from prompts.base_prompts import InstructionPrompt, QueryPrompt
+from .base_prompts import InstructionPrompt, QueryPrompt
 
 class PromptManager:
     def __init__(self):

@@ -1,47 +1,60 @@
-from openai import OpenAI, AsyncOpenAI
-from dotenv import load_dotenv
+"""
+Chat model support.
+
+Includes:
+- ChatModel class for basic RAG-style completion/streaming
+- get_chat_model() for LangChain-compatible usage with agents
+"""
+
 import os
-from typing import List, Dict, Any
+import openai
+from langchain_openai import ChatOpenAI
 
-load_dotenv()
+class ChatModel:
+    """
+    Simple wrapper around OpenAI ChatCompletion for non-agent use (RAG).
 
+    Supports synchronous and asynchronous responses with streaming output.
+    """
 
-class ChatOpenAI:
-    # TODO: add support for other models (get from an env variable, with a default to gpt-4o-mini)
-    def __init__(self, model_name: str = "gpt-4o-mini"):
-        self.model_name = model_name
-        self.openai_api_key = os.getenv("OPENAI_API_KEY")
-        if self.openai_api_key is None:
-            raise ValueError("OPENAI_API_KEY is not set")
+    def __init__(self, model_name: str = None):
+        self.model_name = model_name or os.getenv("OPENAI_MODEL", "gpt-3.5-turbo")
+        self.api_key = os.getenv("OPENAI_API_KEY")
 
-    def run(self, messages: List[Dict[str, Any]], text_only: bool = True, **kwargs):
-        if not isinstance(messages, list):
-            raise ValueError("messages must be a list")
-
-        client = OpenAI(api_key=self.openai_api_key)
-        response = client.chat.completions.create(
-            model=self.model_name, messages=messages, **kwargs
-        )
-
-        if text_only:
-            return response.choices[0].message.content
-
-        return response
-    
-    async def astream(self, messages: List[Dict[str, Any]], **kwargs):
-        if not isinstance(messages, list):
-            raise ValueError("messages must be a list")
-        
-        client = AsyncOpenAI(api_key=self.openai_api_key)
-
-        stream = await client.chat.completions.create(
+    def run(self, prompt: str) -> str:
+        """
+        Synchronously run a prompt against the chat model.
+        """
+        openai.api_key = self.api_key
+        response = openai.ChatCompletion.create(
             model=self.model_name,
-            messages=messages,
-            stream=True,
-            **kwargs
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0
         )
+        return response.choices[0].message["content"]
 
-        async for chunk in stream:
-            content = chunk.choices[0].delta.content
-            if content is not None:
-                yield content
+    async def astream(self, prompt: str):
+        """
+        Asynchronously stream response chunks for a given prompt.
+        """
+        openai.api_key = self.api_key
+        response = await openai.ChatCompletion.acreate(
+            model=self.model_name,
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0,
+            stream=True
+        )
+        for chunk in response:
+            if chunk.choices[0].delta.get("content"):
+                yield chunk.choices[0].delta.content
+
+def get_chat_model():
+    """
+    Returns a LangChain-compatible chat model for use with tools or agents.
+    """
+    return ChatOpenAI(
+        model=os.getenv("OPENAI_MODEL", "gpt-3.5-turbo"),
+        temperature=0,
+        streaming=True,
+        api_key=os.getenv("OPENAI_API_KEY")
+    )

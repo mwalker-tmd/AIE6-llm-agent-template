@@ -1,7 +1,7 @@
 from fastapi import APIRouter, UploadFile, File
 from fastapi.responses import JSONResponse
 import tempfile, shutil, os
-from core.vector_store import VectorStore
+from backend.core.vector_store import VectorStore
 
 router = APIRouter()
 vector_store = VectorStore()

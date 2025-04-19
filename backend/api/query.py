@@ -1,11 +1,15 @@
 from fastapi import APIRouter, Form
 from fastapi.responses import StreamingResponse, JSONResponse
-from core.chatmodel import ChatOpenAI
-from core.vector_store import VectorStore
-from prompts.prompt_manager import PromptManager
+from dotenv import load_dotenv
+from langchain.chat_models import ChatOpenAI
+from ..core.vector_store import VectorStore
+from ..prompts.prompt_manager import PromptManager
+
+# Load environment variables at module level
+load_dotenv()
 
 router = APIRouter()
-llm = ChatOpenAI()
+llm = ChatOpenAI(model_name="gpt-4o-mini")  # Using LangChain's ChatOpenAI
 vector_store = VectorStore()
 prompt_manager = PromptManager()
 

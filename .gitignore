@@ -135,6 +135,8 @@ venv/
 ENV/
 env.bak/
 venv.bak/
+!.env.template  # Allow .env.template to be tracked
+!backend/.env.template  # Allow backend/.env.template to be tracked
 
 # Spyder project settings
 .spyderproject
