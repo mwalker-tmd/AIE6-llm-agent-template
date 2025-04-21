@@ -13,12 +13,12 @@ llm = ChatOpenAI(model_name="gpt-4o-mini")  # Using LangChain's ChatOpenAI
 vector_store = VectorStore()
 prompt_manager = PromptManager()
 
-@router.post("/query")
+@router.post("/ask")
 async def query(question: str = Form(...)):
     if not vector_store.is_initialized:
         return JSONResponse(
             status_code=400, 
-            content={"error": "No file uploaded yet."}
+            content={"error": "No file uploaded yet. Please upload a file before asking questions."}
         )
 
     context_list = vector_store.search(question)
@@ -27,6 +27,11 @@ async def query(question: str = Form(...)):
 
     async def response_stream():
         async for chunk in llm.astream(messages):
-            yield chunk
+            # Extract the text content from the AIMessageChunk
+            if hasattr(chunk, 'content'):
+                yield chunk.content
+            else:
+                # Fallback if the chunk doesn't have a content attribute
+                yield str(chunk)
 
     return StreamingResponse(response_stream(), media_type="text/plain") 
